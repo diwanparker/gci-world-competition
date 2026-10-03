@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data directories (raw competition data downloaded via download_data.py)
+input/
+*.csv.zip
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# CatBoost training logs
+catboost_info/
+
+# Environments & secrets
+.env
+.venv
+env/
+venv/
