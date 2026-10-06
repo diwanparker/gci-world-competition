@@ -104,18 +104,45 @@ def main():
             _, test_raw = load_raw_datasets(data_dir)
             test_ids = test_raw["SK_ID_CURR"].values
 
-            lgb_test = np.load(lgb_test_path)
-            cat_test = np.load(cat_test_path)
+            lgb_ext1_test_path = os.path.join(PREDS_DIR, "lgb_ext1_test.npy")
+            xgb_test_path = os.path.join(PREDS_DIR, "xgb_a_test.npy")
+            lgb_ext1_oof_path = os.path.join(PREDS_DIR, "lgb_ext1_oof.npy")
+            xgb_oof_path = os.path.join(PREDS_DIR, "xgb_a_oof.npy")
 
-            if os.path.exists(lgb_oof_path) and os.path.exists(cat_oof_path):
-                train_raw, _ = load_raw_datasets(data_dir)
-                y_train = train_raw["TARGET"].values
-                lgb_oof = np.load(lgb_oof_path)
-                cat_oof = np.load(cat_oof_path)
-                ensemble_oof = blend_predictions_rank_average([lgb_oof, cat_oof], [0.5, 0.5])
-                logger.info("Ensemble OOF ROC-AUC: %.5f", roc_auc_score(y_train, ensemble_oof))
+            if os.path.exists(lgb_ext1_test_path) and os.path.exists(xgb_test_path):
+                logger.info("Using 4-model champion ensemble (lgb_ext1, lgb_a, cat_a, xgb_a)...")
+                test_preds_list = [
+                    np.load(lgb_ext1_test_path),
+                    np.load(lgb_test_path),
+                    np.load(cat_test_path),
+                    np.load(xgb_test_path),
+                ]
+                weights = [0.35, 0.15, 0.35, 0.15]
 
-            ensemble_test = blend_predictions_rank_average([lgb_test, cat_test], [0.5, 0.5])
+                if os.path.exists(lgb_ext1_oof_path) and os.path.exists(lgb_oof_path) and os.path.exists(cat_oof_path) and os.path.exists(xgb_oof_path):
+                    train_raw, _ = load_raw_datasets(data_dir)
+                    y_train = train_raw["TARGET"].values
+                    oof_preds_list = [
+                        np.load(lgb_ext1_oof_path),
+                        np.load(lgb_oof_path),
+                        np.load(cat_oof_path),
+                        np.load(xgb_oof_path),
+                    ]
+                    ensemble_oof = blend_predictions_rank_average(oof_preds_list, weights)
+                    logger.info("4-Model Champion Ensemble OOF ROC-AUC: %.5f", roc_auc_score(y_train, ensemble_oof))
+            else:
+                test_preds_list = [np.load(lgb_test_path), np.load(cat_test_path)]
+                weights = [0.5, 0.5]
+
+                if os.path.exists(lgb_oof_path) and os.path.exists(cat_oof_path):
+                    train_raw, _ = load_raw_datasets(data_dir)
+                    y_train = train_raw["TARGET"].values
+                    ensemble_oof = blend_predictions_rank_average(
+                        [np.load(lgb_oof_path), np.load(cat_oof_path)], weights
+                    )
+                    logger.info("2-Model Ensemble OOF ROC-AUC: %.5f", roc_auc_score(y_train, ensemble_oof))
+
+            ensemble_test = blend_predictions_rank_average(test_preds_list, weights)
             sub_df = pd.DataFrame({"SK_ID_CURR": test_ids, "TARGET": ensemble_test})
             sub_df.to_csv(submission_path, index=False)
             logger.info("Successfully generated submission: %s (%d rows)", submission_path, len(sub_df))

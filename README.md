@@ -94,5 +94,8 @@ python submit.py --csv output/submission.csv
 | Tuned LightGBM v1 | 0.76120 | 0.76468 |
 | Deep LightGBM v2 | 0.76280 | 0.76544 |
 | LightGBM (121 Features + TE) | 0.76365 | 0.76813 |
+| LightGBM (OOF EXT_SOURCE_1 Imputation) | 0.76382 | — |
 | CatBoost (121 Features) | 0.76236 | — |
-| **Champion Ensemble (LightGBM + CatBoost Rank Average)** | **`0.76481`** | **`0.76821`** (Rank **#3 Worldwide**) |
+| XGBoost (121 Features) | 0.76207 | — |
+| Prior Champion (LightGBM + CatBoost Rank Average) | 0.76481 | 0.76821 (Rank #3 Worldwide) |
+| **New 4-Model Champion Ensemble (35% LGB-EXT1 + 15% LGB + 35% Cat + 15% XGB)** | **`0.76524`** | **Targeting Rank #1** |
